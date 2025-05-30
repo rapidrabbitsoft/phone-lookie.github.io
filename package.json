@@ -1,0 +1,27 @@
+{
+  "name": "phone-lookie",
+  "version": "1.0.0",
+  "description": "Phone number lookup PWA using Twilio API",
+  "main": "index.html",
+  "scripts": {
+    "start": "node scripts/setup-env.js && serve .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "serve": "^14.0.0",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/phone-lookie.github.io.git"
+  },
+  "keywords": [
+    "pwa",
+    "phone",
+    "lookup",
+    "twilio"
+  ],
+  "author": "",
+  "license": "MIT"
+} 
