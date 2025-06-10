@@ -38,7 +38,7 @@ jobs:
           echo " * DO NOT manually edit this file as it will be overwritten" >> dist/assets/js/config.js
           echo " */" >> dist/assets/js/config.js
           echo "" >> dist/assets/js/config.js
-          echo "const config = {" >> assets/js/config.js
+          echo "const config = {" >> dist/assets/js/config.js
           echo "    TWILIO_ACCOUNT_SID: '${{ secrets.TWILIO_ACCOUNT_SID }}'," >> dist/assets/js/config.js
           echo "    TWILIO_AUTH_TOKEN: '${{ secrets.TWILIO_AUTH_TOKEN }}'" >> dist/assets/js/config.js
           echo "};" >> dist/assets/js/config.js

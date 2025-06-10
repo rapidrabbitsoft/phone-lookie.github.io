@@ -7,17 +7,17 @@
     
     <!-- Favicons -->
     <link rel="icon" type="image/x-icon" href="images/favicons/favicon.ico">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/favicons/favicon-16x16.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="images/favicons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="48x48" href="images/favicons/favicon-48x48.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicons/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="assets/images/favicons/favicon-48x48.png">
     
     <!-- Apple Touch Icon -->
-    <link rel="apple-touch-icon" href="images/icons/apple-touch-icon.png">
+    <link rel="apple-touch-icon" href="assets/images/icons/apple-touch-icon.png">
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#007bff">
     <meta name="description" content="Phone number lookup application">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="assets/manifest.json">
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -138,7 +138,7 @@
         return false;
       };
     </script>
-    <script src="js/config.js?v=1" onerror="console.error('Failed to load config.js')"></script>
+    <script src="assets/js/config.js?v=1" onerror="console.error('Failed to load config.js')"></script>
     <script>
       if (typeof config === 'undefined') {
         console.error('config object is not defined. Please check if config.js loaded correctly.');
@@ -147,11 +147,11 @@
       }
       console.log('Loading app.js...');
     </script>
-    <script src="js/app.js?v=1"></script>
+    <script src="assets/js/app.js?v=1"></script>
     <script>
       console.log('Loading keypad.js...');
     </script>
-    <script src="js/keypad.js?v=1"></script>
+    <script src="assets/js/keypad.js?v=1"></script>
     <script>
       // Debug loaded scripts
       console.log('All scripts loaded. Checking for Twilio references...');
