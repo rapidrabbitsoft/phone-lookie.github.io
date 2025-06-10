@@ -118,18 +118,85 @@ function initializeEventListeners() {
 }
 
 function checkCredentials() {
-    if (!config.TWILIO_ACCOUNT_SID || !config.TWILIO_AUTH_TOKEN) {
-        const lookupBtn = document.getElementById('lookupBtn');
+    const lookupBtn = document.getElementById('lookupBtn');
+    const phoneInput = document.getElementById('phoneInput');
+    const resultContent = document.getElementById('resultContent');
+    
+    // Check if config object exists
+    if (typeof config === 'undefined') {
+        showError('Configuration error: Unable to load application settings. Please try refreshing the page.');
         lookupBtn.disabled = true;
-        lookupBtn.textContent = 'Missing Twilio Credentials';
-        lookupBtn.classList.add('btn-danger');
-        console.error('Twilio credentials not found. Please check your .env file or GitHub secrets.');
+        phoneInput.disabled = true;
+        lookupBtn.textContent = 'Configuration Error';
+        lookupBtn.classList.remove('btn-primary');
+        lookupBtn.classList.add('btn-secondary');
+        lookupBtn.style.opacity = '0.7';
+        lookupBtn.style.cursor = 'not-allowed';
+        return false;
     }
+
+    // Check if Twilio credentials exist
+    if (!config.TWILIO_ACCOUNT_SID || !config.TWILIO_AUTH_TOKEN) {
+        showError('Twilio credentials are not configured. Please contact the administrator.');
+        lookupBtn.disabled = true;
+        phoneInput.disabled = true;
+        lookupBtn.textContent = 'Missing Twilio Credentials';
+        lookupBtn.classList.remove('btn-primary');
+        lookupBtn.classList.add('btn-secondary');
+        lookupBtn.style.opacity = '0.7';
+        lookupBtn.style.cursor = 'not-allowed';
+        
+        // Add a tooltip to explain the error
+        const tooltip = new bootstrap.Tooltip(lookupBtn, {
+            title: 'The application is missing required Twilio API credentials. Please contact the administrator.',
+            placement: 'top',
+            trigger: 'hover'
+        });
+        
+        return false;
+    }
+
+    // Credentials are valid
+    lookupBtn.disabled = false;
+    phoneInput.disabled = false;
+    lookupBtn.textContent = 'Lookup Number';
+    lookupBtn.classList.remove('btn-secondary');
+    lookupBtn.classList.add('btn-primary');
+    lookupBtn.style.opacity = '1';
+    lookupBtn.style.cursor = 'pointer';
+    return true;
+}
+
+function showError(message) {
+    const resultContent = document.getElementById('resultContent');
+    const errorHtml = `
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Error</h4>
+            <p>${message}</p>
+            <hr>
+            <p class="mb-0">If this error persists, please try refreshing the page or contact support.</p>
+        </div>
+    `;
+    resultContent.innerHTML = errorHtml;
+    resultsModal.show();
 }
 
 // Phone Input Handlers
 function handlePhoneInput(e) {
-    e.target.value = e.target.value.replace(/\D/g, '');
+    // Allow only digits and '+' at the start
+    let value = e.target.value;
+    if (value.startsWith('+')) {
+        // Keep the plus and only allow digits after it
+        value = '+' + value.slice(1).replace(/\D/g, '');
+    } else {
+        // If it starts with 1, automatically add the plus
+        if (value.startsWith('1') && value.length > 1) {
+            value = '+' + value;
+        } else {
+            value = value.replace(/\D/g, '');
+        }
+    }
+    e.target.value = value;
 }
 
 function handlePhoneBlur(e) {
@@ -159,23 +226,51 @@ function clearPhoneInput() {
 
 // Phone Number Formatting
 function formatPhoneNumberInput(value) {
+    // Remove all non-digits except leading '+'
+    const hasPlus = value.startsWith('+');
     const digits = value.replace(/\D/g, '');
     
-    if (digits.length <= 3) {
-        return digits;
-    } else if (digits.length <= 6) {
-        return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-    } else if (digits.length <= 10) {
-        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} ${digits.slice(6)}`;
+    // If it starts with a plus, keep it
+    if (hasPlus) {
+        // Handle international numbers
+        if (digits.length <= 3) {
+            return '+' + digits;
+        } else if (digits.length <= 6) {
+            return '+' + digits.slice(0, 3) + ' ' + digits.slice(3);
+        } else if (digits.length <= 10) {
+            return '+' + digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6);
+        } else {
+            const countryCode = digits.slice(0, -10);
+            const number = digits.slice(-10);
+            return '+' + countryCode + ' (' + number.slice(0, 3) + ') ' + number.slice(3, 6) + '-' + number.slice(6);
+        }
     } else {
-        const countryCode = digits.slice(0, -10);
-        const number = digits.slice(-10);
-        return `+${countryCode} (${number.slice(0, 3)}) ${number.slice(3, 6)} ${number.slice(6)}`;
+        // Handle US numbers without country code
+        if (digits.length <= 3) {
+            return digits;
+        } else if (digits.length <= 6) {
+            return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+        } else if (digits.length <= 10) {
+            return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+        } else {
+            // If more than 10 digits without +, assume it's a US number with country code
+            return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7, 11)}`;
+        }
     }
 }
 
 function formatPhoneNumber(number) {
-    return number.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+    // Remove all non-digits except leading '+'
+    const hasPlus = number.startsWith('+');
+    const digits = number.replace(/\D/g, '');
+    
+    if (hasPlus) {
+        const countryCode = digits.slice(0, -10);
+        const number = digits.slice(-10);
+        return `+${countryCode} (${number.slice(0, 3)}) ${number.slice(3, 6)}-${number.slice(6)}`;
+    } else {
+        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    }
 }
 
 // API and Results Handling
@@ -183,13 +278,34 @@ async function performLookup() {
     const phoneInput = document.getElementById('phoneInput');
     const resultContent = document.getElementById('resultContent');
     const backToHistoryBtn = document.getElementById('backToHistoryBtn');
-    const phoneNumber = phoneInput.value.replace(/\D/g, '');
+    
+    // Get the phone number and remove all formatting
+    let phoneNumber = phoneInput.value.replace(/\D/g, '');
+    
+    // If it starts with a plus, keep it
+    if (phoneInput.value.startsWith('+')) {
+        phoneNumber = '+' + phoneNumber;
+    } else if (phoneNumber.length === 10) {
+        // If it's a 10-digit US number, add the +1 prefix
+        phoneNumber = '+1' + phoneNumber;
+    }
 
     backToHistoryBtn.classList.add('d-none');
     isViewingHistory = false;
 
-    if (phoneNumber.length !== 10) {
-        showError('Please enter a valid 10-digit phone number');
+    // Check credentials before proceeding
+    if (!checkCredentials()) {
+        return;
+    }
+
+    // Validate phone number
+    if (!isValidPhoneNumber(phoneNumber)) {
+        showError('Please enter a valid phone number:\n' +
+                 '• US numbers: (XXX) XXX-XXXX\n' +
+                 '• International: +[country code] (XXX) XXX-XXXX\n' +
+                 'Examples:\n' +
+                 '• +1 (123) 456-7890\n' +
+                 '• +44 (123) 456-7890');
         return;
     }
 
@@ -200,7 +316,19 @@ async function performLookup() {
         displayResults(data, resultContent);
     } catch (error) {
         console.error('Lookup error:', error);
-        showError('Error performing lookup. Please try again.');
+        let errorMessage = 'An error occurred while looking up the phone number.';
+        
+        if (error.message.includes('401')) {
+            errorMessage = 'Authentication error: Invalid Twilio credentials. Please contact the administrator.';
+        } else if (error.message.includes('403')) {
+            errorMessage = 'Authorization error: Insufficient permissions to perform the lookup.';
+        } else if (error.message.includes('429')) {
+            errorMessage = 'Rate limit exceeded. Please try again later.';
+        } else if (error.message.includes('500')) {
+            errorMessage = 'Twilio service error. Please try again later.';
+        }
+        
+        showError(errorMessage);
     }
 }
 
@@ -341,17 +469,6 @@ function generateIdentityMatchSection(identityMatch) {
     `;
 }
 
-// Error Handling
-function showError(message) {
-    const resultContent = document.getElementById('resultContent');
-    resultContent.innerHTML = `
-        <div class="alert alert-danger" role="alert">
-            ${message}
-        </div>
-    `;
-    resultsModal.show();
-}
-
 // History Management
 function saveToHistory(phoneNumber, data) {
     try {
@@ -457,4 +574,28 @@ function lookupFromHistory(phoneNumber) {
     phoneInput.value = formatPhoneNumber(phoneNumber);
     historyModal.hide();
     performLookup();
+}
+
+function isValidPhoneNumber(phoneNumber) {
+    // Remove all non-digits except leading '+'
+    const hasPlus = phoneNumber.startsWith('+');
+    const digits = phoneNumber.replace(/\D/g, '');
+    
+    // Basic validation rules:
+    // 1. Must have at least 10 digits (excluding country code)
+    // 2. If it has a country code, it must be valid
+    // 3. Total length should be reasonable (between 10 and 15 digits)
+    // 4. Country code should be between 1 and 3 digits
+    
+    if (hasPlus) {
+        // International number with country code
+        const countryCodeLength = digits.length - 10;
+        return digits.length >= 11 && // At least country code + 10 digits
+               digits.length <= 15 && // Maximum reasonable length
+               countryCodeLength >= 1 && // At least 1 digit for country code
+               countryCodeLength <= 3;   // Maximum 3 digits for country code
+    } else {
+        // US number without country code
+        return digits.length === 10;
+    }
 } 

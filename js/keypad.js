@@ -1,14 +1,25 @@
 $(document).ready(function() {
     // Keypad button click handler
     $('.keypad-btn').on('click', function() {
-        const value = $(this).text();
+        const value = $(this).text().trim();
         const input = $('#phoneInput');
         const currentValue = input.val();
         
-        // Format the phone number as user types
+        // Handle special cases
+        if (value === '+') {
+            // If there's already a plus, don't add another
+            if (!currentValue.startsWith('+')) {
+                input.val('+' + currentValue);
+            }
+            return;
+        }
+        
+        // Add the digit
         let newValue = currentValue + value;
-        newValue = formatPhoneNumber(newValue);
         input.val(newValue);
+        
+        // Trigger input event to format the number
+        input.trigger('input');
     });
 
     // Format phone number input
@@ -20,16 +31,35 @@ $(document).ready(function() {
 
     // Function to format phone number
     function formatPhoneNumber(value) {
-        // Remove all non-numeric characters
-        const number = value.replace(/\D/g, '');
+        // Keep the plus if it exists
+        const hasPlus = value.startsWith('+');
+        const digits = value.replace(/\D/g, '');
         
-        // Format the number
-        if (number.length <= 3) {
-            return number;
-        } else if (number.length <= 6) {
-            return `(${number.slice(0, 3)}) ${number.slice(3)}`;
+        if (hasPlus) {
+            // Handle international numbers
+            if (digits.length <= 3) {
+                return '+' + digits;
+            } else if (digits.length <= 6) {
+                return '+' + digits.slice(0, 3) + ' ' + digits.slice(3);
+            } else if (digits.length <= 10) {
+                return '+' + digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6);
+            } else {
+                const countryCode = digits.slice(0, -10);
+                const number = digits.slice(-10);
+                return '+' + countryCode + ' (' + number.slice(0, 3) + ') ' + number.slice(3, 6) + '-' + number.slice(6);
+            }
         } else {
-            return `(${number.slice(0, 3)}) ${number.slice(3, 6)}-${number.slice(6, 10)}`;
+            // Handle US numbers without country code
+            if (digits.length <= 3) {
+                return digits;
+            } else if (digits.length <= 6) {
+                return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+            } else if (digits.length <= 10) {
+                return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+            } else {
+                // If more than 10 digits without +, assume it's a US number with country code
+                return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7, 11)}`;
+            }
         }
     }
 }); 

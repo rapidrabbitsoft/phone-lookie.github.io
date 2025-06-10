@@ -5,13 +5,16 @@
   "main": "index.html",
   "scripts": {
     "start": "node scripts/setup-env.js && serve .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate-favicons": "node scripts/generate-favicons.js"
   },
   "dependencies": {
     "serve": "^14.0.0",
     "dotenv": "^16.0.3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "sharp": "^0.33.2"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/yourusername/phone-lookie.github.io.git"
