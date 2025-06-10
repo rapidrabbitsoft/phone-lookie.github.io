@@ -1,19 +1,23 @@
 {
   "name": "phone-lookie",
   "version": "1.0.0",
-  "description": "Phone number lookup PWA using Twilio API",
-  "main": "index.html",
+  "description": "A Progressive Web App for phone number lookup",
   "scripts": {
-    "start": "node scripts/setup-env.js && serve .",
+    "build": "node scripts/build.js",
+    "serve": "npx serve dist",
+    "start": "npm run build && npm run serve",
+    "dev": "npx serve .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "generate-favicons": "node scripts/generate-favicons.js"
   },
   "dependencies": {
-    "serve": "^14.0.0",
-    "dotenv": "^16.0.3"
+    "clean-css": "^5.3.3",
+    "fs-extra": "^11.2.0",
+    "sharp": "^0.34.2",
+    "terser": "^5.29.2"
   },
   "devDependencies": {
-    "sharp": "^0.33.2"
+    "serve": "^14.2.1"
   },
   "repository": {
     "type": "git",
@@ -27,4 +31,4 @@
   ],
   "author": "",
   "license": "MIT"
-} 
+}

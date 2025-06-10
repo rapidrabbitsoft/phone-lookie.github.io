@@ -1,9 +1,12 @@
-const CACHE_NAME = 'phone-lookie-v4';
+const CACHE_NAME = 'phone-lookie-v5';
 const urlsToCache = [
     '/',
     '/index.html',
-    '/css/styles.css',
+    '/assets/css/styles.css',
     '/manifest.json',
+    '/assets/js/app.js',
+    '/assets/js/keypad.js',
+    '/assets/js/config.js',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
     'https://code.jquery.com/jquery-3.6.0.min.js'
@@ -24,8 +27,10 @@ self.addEventListener('activate', event => {
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cacheName => {
-                    console.log('Deleting cache:', cacheName);
-                    return caches.delete(cacheName);
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('Deleting old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
                 })
             );
         })

@@ -1,134 +1,68 @@
 const sharp = require('sharp');
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 
-// Ensure the output directories exist
-const outputDirs = [
-    'images/favicons',
-    'images/icons'
-];
-
-outputDirs.forEach(dir => {
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+// Define paths
+const paths = {
+    source: 'assets/images/favicons/favicon.svg',
+    output: {
+        root: 'assets/images',
+        favicons: 'assets/images/favicons',
+        icons: 'assets/images/icons'
     }
-});
+};
 
-// PWA icon sizes
-const iconSizes = [
-    { size: 16, name: 'favicon-16x16.png' },
-    { size: 32, name: 'favicon-32x32.png' },
-    { size: 48, name: 'favicon-48x48.png' },
-    { size: 72, name: 'icon-72x72.png' },
-    { size: 96, name: 'icon-96x96.png' },
-    { size: 128, name: 'icon-128x128.png' },
-    { size: 144, name: 'icon-144x144.png' },
-    { size: 152, name: 'icon-152x152.png' },
-    { size: 192, name: 'icon-192x192.png' },
-    { size: 384, name: 'icon-384x384.png' },
-    { size: 512, name: 'icon-512x512.png' }
-];
+// Ensure output directories exist
+fs.ensureDirSync(paths.output.favicons);
+fs.ensureDirSync(paths.output.icons);
 
-// Generate PNG icons
-async function generateIcons() {
-    const sourceSvg = path.join('images', 'favicons', 'favicon.svg');
-    
-    for (const icon of iconSizes) {
-        const outputPath = path.join('images', 'icons', icon.name);
-        
-        try {
-            await sharp(sourceSvg)
-                .resize(icon.size, icon.size)
-                .png()
-                .toFile(outputPath);
-            
-            console.log(`Generated ${icon.name}`);
-        } catch (error) {
-            console.error(`Error generating ${icon.name}:`, error);
-        }
-    }
-}
-
-// Generate favicon.ico (16x16, 32x32)
-async function generateFaviconIco() {
-    const sourceSvg = path.join('images', 'favicons', 'favicon.svg');
-    const outputPath = path.join('images', 'favicons', 'favicon.ico');
-    
+// Generate favicons
+async function generateFavicons() {
     try {
-        const png16 = await sharp(sourceSvg)
+        console.log('Generating favicons...');
+        
+        // Generate favicon-16x16.png
+        await sharp(paths.source)
             .resize(16, 16)
-            .png()
-            .toBuffer();
-            
-        const png32 = await sharp(sourceSvg)
+            .toFile(path.join(paths.output.favicons, 'favicon-16x16.png'));
+        console.log('Generated favicon-16x16.png');
+
+        // Generate favicon-32x32.png
+        await sharp(paths.source)
             .resize(32, 32)
-            .png()
-            .toBuffer();
-            
-        // Combine the PNGs into an ICO file
-        await sharp(png32)
-            .joinChannel(png16)
-            .toFile(outputPath);
-            
-        console.log('Generated favicon.ico');
-    } catch (error) {
-        console.error('Error generating favicon.ico:', error);
-    }
-}
+            .toFile(path.join(paths.output.favicons, 'favicon-32x32.png'));
+        console.log('Generated favicon-32x32.png');
 
-// Generate Apple Touch Icon
-async function generateAppleTouchIcon() {
-    const sourceSvg = path.join('images', 'favicons', 'favicon.svg');
-    const outputPath = path.join('images', 'icons', 'apple-touch-icon.png');
-    
-    try {
-        await sharp(sourceSvg)
+        // Generate apple-touch-icon.png
+        await sharp(paths.source)
             .resize(180, 180)
-            .png()
-            .toFile(outputPath);
-            
+            .toFile(path.join(paths.output.favicons, 'apple-touch-icon.png'));
         console.log('Generated apple-touch-icon.png');
-    } catch (error) {
-        console.error('Error generating apple-touch-icon.png:', error);
-    }
-}
 
-// Generate manifest icons
-async function generateManifestIcons() {
-    const sourceSvg = path.join('images', 'favicons', 'favicon.svg');
-    const manifestIcons = [
-        { size: 192, purpose: 'any' },
-        { size: 512, purpose: 'any' },
-        { size: 192, purpose: 'maskable' },
-        { size: 512, purpose: 'maskable' }
-    ];
-    
-    for (const icon of manifestIcons) {
-        const outputPath = path.join('images', 'icons', `icon-${icon.size}x${icon.size}-${icon.purpose}.png`);
-        
-        try {
-            await sharp(sourceSvg)
-                .resize(icon.size, icon.size)
-                .png()
-                .toFile(outputPath);
-                
-            console.log(`Generated icon-${icon.size}x${icon.size}-${icon.purpose}.png`);
-        } catch (error) {
-            console.error(`Error generating icon-${icon.size}x${icon.size}-${icon.purpose}.png:`, error);
+        // Generate PWA icons
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        for (const size of sizes) {
+            // Regular icon
+            await sharp(paths.source)
+                .resize(size, size)
+                .toFile(path.join(paths.output.icons, `icon-${size}x${size}.png`));
+            console.log(`Generated icon-${size}x${size}.png`);
+
+            // Maskable icon (if size is 192 or 512)
+            if (size === 192 || size === 512) {
+                await sharp(paths.source)
+                    .resize(size, size)
+                    .toFile(path.join(paths.output.icons, `icon-${size}x${size}-maskable.png`));
+                console.log(`Generated icon-${size}x${size}-maskable.png`);
+            }
         }
+
+        console.log('All favicons generated successfully!');
+    } catch (error) {
+        console.error('Error generating favicons:', error);
+        process.exit(1);
     }
 }
 
-// Run all generation functions
-async function generateAll() {
-    console.log('Starting favicon generation...');
-    
-    await generateIcons();
-    await generateFaviconIco();
-    await generateAppleTouchIcon();
-    await generateManifestIcons();
-    
-    console.log('Favicon generation complete!');
-}
-
-generateAll().catch(console.error); 
+// Run the generation
+generateFavicons(); 
